@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>JP's Speed Lab</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --green: #00E676; --orange: #FF6D00; --navy: #0A0F1E;
+  --navy2: #111827; --card: #162032; --card2: #1C2B40;
+  --text: #E8F0F8; --muted: #8CA0B5; --gold: #FFD600;
+  --red: #FF3D00; --purple: #7C4DFF; --teal: #00BFA5;
+  --radius: 18px; --tab-h: 68px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; background: var(--navy); font-family: 'Barlow', sans-serif; color: var(--text); overflow: hidden; }
+#app { display: flex; flex-direction: column; height: 100vh; height: 100dvh; max-width: 480px; margin: 0 auto; }
+#content { flex: 1; overflow-y: auto; overflow-x: hidden; padding-bottom: calc(var(--tab-h) + 12px); }
+#content::-webkit-scrollbar { display: none; }
+.hdr { background: linear-gradient(135deg,#0A1628,#0F2040); padding: 52px 20px 20px; position: relative; overflow: hidden; }
+.hdr::before { content:''; position:absolute; top:-40px; right:-40px; width:200px; height:200px; background:radial-gradient(circle,rgba(0,230,118,.15),transparent 70%); }
+.hdr-badge { display:inline-flex; align-items:center; gap:6px; background:rgba(0,230,118,.15); border:1px solid rgba(0,230,118,.3); border-radius:20px; padding:4px 12px; font-size:11px; font-weight:600; color:var(--green); letter-spacing:1px; text-transform:uppercase; margin-bottom:8px; }
+.hdr h1 { font-family:'Bebas Neue',sans-serif; font-size:42px; letter-spacing:2px; line-height:1; color:#fff; }
+.hdr h1 span { color:var(--green); }
+.hdr-sub { font-size:13px; color:var(--muted); margin-top:4px; }
+.hdr-sports { display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
+.sport-tag { background:rgba(255,255,255,.08); border-radius:20px; padding:4px 12px; font-size:11px; font-weight:600; color:var(--muted); }
+#tab-bar { height:var(--tab-h); background:#0D1929; border-top:1px solid rgba(255,255,255,.07); display:flex; position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:480px; z-index:100; }
+.tab { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; cursor:pointer; opacity:.45; padding-bottom:6px; }
+.tab.active { opacity:1; }
+.tab-icon { font-size:22px; }
+.tab-lbl { font-size:10px; font-weight:600; letter-spacing:.5px; color:var(--muted); text-transform:uppercase; }
+.tab.active .tab-lbl { color:var(--green); }
+.tab-pip { width:4px; height:4px; border-radius:50%; background:var(--green); opacity:0; }
+.tab.active .tab-pip { opacity:1; }
+.page { display:none; }
+.page.active { display:block; }
+.sec-pad { padding:0 16px; }
+.sec-title { font-family:'Barlow Condensed',sans-serif; font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin:22px 0 10px; }
+.week-strip { display:flex; gap:8px; padding:14px 16px; overflow-x:auto; scrollbar-width:none; }
+.week-strip::-webkit-scrollbar { display:none; }
+.week-btn { flex-shrink:0; padding:10px 20px; border-radius:30px; border:1.5px solid rgba(255,255,255,.1); background:transparent; color:var(--muted); font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:700; cursor:pointer; }
+.week-btn.active { background:var(--green); border-color:var(--green); color:#0A0F1E; }
+.sess-card { background:var(--card); border-radius:var(--radius); margin:0 16px 14px; overflow:hidden; border:1px solid rgba(255,255,255,.05); }
+.sess-hdr { display:flex; align-items:center; justify-content:space-between; padding:14px 16px; cursor:pointer; user-select:none; }
+.sess-hdr-l { display:flex; align-items:center; gap:12px; }
+.sess-num { width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'Bebas Neue',sans-serif; font-size:16px; color:#0A0F1E; flex-shrink:0; }
+.sess-info h3 { font-family:'Barlow Condensed',sans-serif; font-size:17px; font-weight:700; }
+.sess-info p { font-size:12px; color:var(--muted); margin-top:1px; }
+.chevron { font-size:20px; color:var(--muted); transition:transform .3s; line-height:1; display:inline-block; }
+.sess-card.open .chevron { transform:rotate(90deg); }
+.sess-body { display:none; padding:0 16px 16px; }
+.sess-card.open .sess-body { display:block; }
+.ex-lbl { font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); margin:12px 0 8px; }
+.ex-row { background:var(--card2); border-radius:12px; padding:12px 14px; margin-bottom:8px; display:flex; align-items:center; gap:10px; }
+.ex-left { flex:1; min-width:0; }
+.ex-name { font-family:'Barlow Condensed',sans-serif; font-size:16px; font-weight:700; }
+.ex-note { font-size:11px; color:var(--muted); margin-top:3px; line-height:1.4; }
+.ex-tags { display:flex; gap:5px; margin-top:6px; flex-wrap:wrap; }
+.ex-tag { background:rgba(255,255,255,.07); border-radius:6px; padding:2px 8px; font-size:10px; font-weight:600; color:var(--muted); }
+.vid-btn { flex-shrink:0; background:var(--orange); border-radius:10px; padding:9px 11px; display:flex; align-items:center; gap:5px; font-size:11px; font-weight:700; color:#fff; cursor:pointer; border:none; }
+.vid-btn svg { width:14px; height:14px; fill:#fff; }
+.warmup { background:rgba(124,77,255,.12); border:1px solid rgba(124,77,255,.2); border-radius:12px; padding:10px 14px; margin-bottom:8px; }
+.cooldown { background:rgba(0,191,165,.1); border:1px solid rgba(0,191,165,.2); border-radius:12px; padding:10px 14px; margin-top:8px; }
+.wc-title { font-family:'Barlow Condensed',sans-serif; font-size:15px; font-weight:700; }
+.warmup .wc-title { color:var(--purple); }
+.cooldown .wc-title { color:var(--teal); }
+.wc-text { font-size:11px; color:var(--muted); margin-top:3px; line-height:1.5; }
+.complete-btn { width:100%; margin-top:12px; padding:12px; border-radius:12px; border:none; font-family:'Barlow Condensed',sans-serif; font-size:16px; font-weight:700; letter-spacing:.5px; cursor:pointer; transition:all .2s; }
+.prog-hero { background:linear-gradient(135deg,#0D1F35,#162032); border-radius:var(--radius); padding:20px; border:1px solid rgba(0,230,118,.15); }
+.prog-wk { font-size:12px; color:var(--muted); margin-bottom:4px; }
+.prog-big { font-family:'Bebas Neue',sans-serif; font-size:56px; color:var(--green); line-height:1; }
+.prog-sub { font-size:13px; color:var(--muted); }
+.prog-bar-wrap { margin-top:14px; background:rgba(255,255,255,.07); border-radius:10px; height:10px; overflow:hidden; }
+.prog-bar { height:100%; border-radius:10px; background:linear-gradient(90deg,var(--green),var(--teal)); transition:width .6s ease; }
+.stat-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:0 16px 4px; }
+.stat-card { background:var(--card); border-radius:14px; padding:14px; border:1px solid rgba(255,255,255,.05); }
+.stat-lbl { font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); margin-bottom:4px; }
+.check-card { background:var(--card); border-radius:var(--radius); margin:0 16px 14px; padding:16px; border:1px solid rgba(255,255,255,.05); }
+.check-item { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid rgba(255,255,255,.05); cursor:pointer; }
+.check-item:last-child { border-bottom:none; }
+.check-box { width:22px; height:22px; border-radius:6px; border:2px solid rgba(255,255,255,.2); flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:#0A0F1E; }
+.check-box.done { background:var(--green); border-color:var(--green); }
+.check-txt { font-size:13px; }
+.check-txt.done { text-decoration:line-through; color:var(--muted); }
+.bench-card { background:var(--card); border-radius:var(--radius); margin:0 16px 12px; padding:16px; border:1px solid rgba(255,255,255,.05); }
+.bench-icon { font-size:28px; margin-bottom:6px; }
+.bench-title { font-family:'Barlow Condensed',sans-serif; font-size:18px; font-weight:700; }
+.bench-desc { font-size:12px; color:var(--muted); margin:4px 0 8px; line-height:1.5; }
+.bench-how { font-size:12px; color:var(--text); line-height:1.6; margin-bottom:10px; }
+.bench-pills { display:flex; gap:6px; flex-wrap:wrap; }
+.bench-pill { background:rgba(255,255,255,.07); border-radius:20px; padding:4px 10px; font-size:10px; font-weight:600; }
+.bench-inputs { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; padding-top:12px; border-top:1px solid rgba(255,255,255,.07); }
+.bench-input-lbl { font-size:10px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
+.bench-row { display:flex; gap:8px; align-items:center; }
+.bench-inp { background:rgba(255,255,255,.07); border:1.5px solid rgba(255,255,255,.1); border-radius:10px; padding:8px 10px; color:var(--text); font-size:14px; font-weight:600; width:80px; text-align:center; outline:none; -webkit-appearance:none; }
+.bench-inp:focus { border-color:var(--green); }
+.bench-save { background:var(--green); border:none; border-radius:10px; padding:9px 12px; font-size:12px; font-weight:700; color:#0A0F1E; cursor:pointer; }
+.bench-result { margin-top:10px; border-radius:10px; padding:10px 12px; font-size:13px; font-weight:600; }
+.bench-result.good { background:rgba(0,230,118,.1); color:var(--green); }
+.bench-result.keep { background:rgba(255,61,0,.1); color:var(--red); }
+.tip-card { background:var(--card); border-radius:var(--radius); margin:0 16px 12px; padding:16px; border:1px solid rgba(255,255,255,.05); display:flex; gap:14px; }
+.tip-icon { width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; }
+.tip-icon.g { background:rgba(0,230,118,.15); }
+.tip-icon.o { background:rgba(255,109,0,.15); }
+.tip-icon.p { background:rgba(124,77,255,.15); }
+.tip-icon.gold { background:rgba(255,214,0,.15); }
+.tip-icon.t { background:rgba(0,191,165,.15); }
+.tip-h { font-family:'Barlow Condensed',sans-serif; font-size:16px; font-weight:700; margin-bottom:4px; }
+.tip-p { font-size:12px; color:var(--muted); line-height:1.6; }
+.sport-card { background:var(--card); border-radius:var(--radius); margin:0 16px 12px; padding:16px; border:1px solid rgba(255,255,255,.05); }
+.sport-card h4 { font-family:'Barlow Condensed',sans-serif; font-size:17px; font-weight:700; margin-bottom:6px; }
+.sport-card ul { padding-left:16px; }
+.sport-card li { font-size:12px; color:var(--muted); line-height:1.9; }
+.summer-card { background:linear-gradient(135deg,#1A1500,#1E2800); border:1px solid rgba(255,214,0,.2); border-radius:var(--radius); margin:0 16px 12px; padding:16px; }
+.summer-card h4 { font-family:'Barlow Condensed',sans-serif; font-size:17px; font-weight:700; color:var(--gold); margin-bottom:8px; }
+.summer-card p { font-size:12px; color:var(--muted); line-height:1.7; }
+#modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.85); z-index:200; align-items:center; justify-content:center; padding:20px; }
+#modal.show { display:flex; }
+#modal-box { background:var(--navy2); border-radius:20px; width:100%; max-width:440px; overflow:hidden; max-height:88vh; overflow-y:auto; }
+#modal-box::-webkit-scrollbar { display:none; }
+#modal-hdr { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid rgba(255,255,255,.07); position:sticky; top:0; background:var(--navy2); z-index:1; }
+#modal-title { font-family:'Barlow Condensed',sans-serif; font-size:18px; font-weight:700; }
+#modal-close { background:rgba(255,255,255,.1); border:none; border-radius:50%; width:32px; height:32px; color:var(--text); font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+#modal-body { padding:20px; }
+#modal-desc { font-size:13px; color:var(--muted); line-height:1.6; margin-bottom:14px; }
+#modal-steps-wrap { background:var(--card); border-radius:12px; padding:14px; margin-bottom:14px; }
+#modal-steps-lbl { font-size:11px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--green); margin-bottom:8px; }
+#modal-steps { padding-left:16px; }
+#modal-steps li { font-size:12px; color:var(--text); line-height:1.9; }
+.yt-btn { display:flex; background:#FF0000; border-radius:12px; padding:14px; text-decoration:none; color:#fff; font-weight:700; font-size:14px; align-items:center; justify-content:center; gap:8px; }
+#toast { position:fixed; bottom:calc(var(--tab-h) + 16px); left:50%; transform:translateX(-50%) translateY(20px); background:var(--green); color:#0A0F1E; border-radius:30px; padding:10px 20px; font-weight:700; font-size:13px; opacity:0; transition:all .3s; z-index:300; white-space:nowrap; pointer-events:none; }
+#toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <nav id="tab-bar">
+    <div class="tab active" id="tab-home"><div class="tab-icon">&#127968;</div><div class="tab-lbl">Home</div><div class="tab-pip"></div></div>
+    <div class="tab" id="tab-program"><div class="tab-icon">&#128203;</div><div class="tab-lbl">Program</div><div class="tab-pip"></div></div>
+    <div class="tab" id="tab-benchmarks"><div class="tab-icon">&#128202;</div><div class="tab-lbl">Benchmarks</div><div class="tab-pip"></div></div>
+    <div class="tab" id="tab-progress"><div class="tab-icon">&#127942;</div><div class="tab-lbl">Progress</div><div class="tab-pip"></div></div>
+    <div class="tab" id="tab-tips"><div class="tab-icon">&#128161;</div><div class="tab-lbl">Tips</div><div class="tab-pip"></div></div>
+  </nav>
+
+  <div id="content">
+
+    <!-- HOME -->
+    <div id="page-home" class="page active">
+      <div class="hdr">
+        <div class="hdr-badge">JP's Speed Lab</div>
+        <h1>JP's<br><span>SPEED LAB</span></h1>
+        <div class="hdr-sub">6-Week Speed &amp; Agility Program &middot; Ages 8&ndash;11</div>
+        <div class="hdr-sports">
+          <div class="sport-tag">Football</div>
+          <div class="sport-tag">Golf</div>
+          <div class="sport-tag">Basketball</div>
+          <div class="sport-tag">Lacrosse</div>
+        </div>
+      </div>
+      <div class="sec-pad"><div class="sec-title">Your Journey</div></div>
+      <div style="padding:0 16px 4px">
+        <div class="prog-hero">
+          <div class="prog-wk">Current Progress</div>
+          <div class="prog-big" id="home-week-big">W1</div>
+          <div class="prog-sub" id="home-phase">Beginner Phase &middot; Foundation Building</div>
+          <div class="prog-bar-wrap"><div class="prog-bar" id="home-bar" style="width:5%"></div></div>
+          <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:var(--muted)"><span>Week 1</span><span>Week 6</span></div>
+        </div>
+      </div>
+      <div class="sec-pad"><div class="sec-title">Quick Start</div></div>
+      <div style="padding:0 16px 4px">
+        <div id="go-program-btn" style="background:linear-gradient(135deg,#0D2010,#112A18);border:1px solid rgba(0,230,118,.2);border-radius:var(--radius);padding:16px;display:flex;align-items:center;gap:14px;cursor:pointer">
+          <div style="width:50px;height:50px;border-radius:14px;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0">&#9889;</div>
+          <div><div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700">Today's Session</div><div style="font-size:12px;color:var(--muted)">Tap to see current week workouts</div></div>
+        </div>
+      </div>
+      <div class="sec-pad"><div class="sec-title">Program Phases</div></div>
+      <div style="display:flex;gap:10px;padding:0 16px 4px;overflow-x:auto;scrollbar-width:none">
+        <div style="flex-shrink:0;background:var(--card);border-radius:14px;padding:14px;width:140px;border:1px solid rgba(0,230,118,.2)"><div style="font-size:22px;margin-bottom:6px">&#127807;</div><div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;color:var(--green)">Weeks 1-2</div><div style="font-size:11px;color:var(--muted);margin-top:3px">Beginner<br>Foundation</div></div>
+        <div style="flex-shrink:0;background:var(--card);border-radius:14px;padding:14px;width:140px;border:1px solid rgba(255,109,0,.2)"><div style="font-size:22px;margin-bottom:6px">&#128293;</div><div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;color:var(--orange)">Weeks 3-4</div><div style="font-size:11px;color:var(--muted);margin-top:3px">Intermediate<br>Speed + Agility</div></div>
+        <div style="flex-shrink:0;background:var(--card);border-radius:14px;padding:14px;width:140px;border:1px solid rgba(124,77,255,.2)"><div style="font-size:22px;margin-bottom:6px">&#128640;</div><div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;color:var(--purple)">Weeks 5-6</div><div style="font-size:11px;color:var(--muted);margin-top:3px">Advanced<br>Full Power</div></div>
+      </div>
+      <div class="sec-pad"><div class="sec-title">Equipment Needed</div></div>
+      <div class="tip-card"><div class="tip-icon g" style="font-size:22px">&#127878;</div><div><div class="tip-h">What You Need</div><div class="tip-p">Agility hurdles &middot; Coloured cones (6-10) &middot; Agility ladder &middot; Agility poles &middot; Stopwatch &middot; Tape measure</div></div></div>
+      <div class="sec-pad"><div class="sec-title">JP's Speed Lab</div></div>
+      <div style="padding:0 16px 24px;font-size:12px;color:var(--muted);line-height:1.7">This program develops agility, coordination, balance, and strength. Sessions are 30-40 min, 3 sessions per week. Built for multi-sport athletes. Program by Hendrick Famutimi.</div>
+    </div>
+
+    <!-- PROGRAM -->
+    <div id="page-program" class="page">
+      <div class="hdr" style="padding-top:52px;padding-bottom:14px">
+        <div class="hdr-badge">Weekly Plans</div>
+        <h1>THE<br><span>PROGRAM</span></h1>
+      </div>
+      <div class="week-strip">
+        <button class="week-btn active" id="wbtn-0">Weeks 1-2</button>
+        <button class="week-btn" id="wbtn-1">Weeks 3-4</button>
+        <button class="week-btn" id="wbtn-2">Weeks 5-6</button>
+      </div>
+      <div id="week-phase-lbl" style="padding:0 16px 6px;font-size:12px;color:var(--muted)"></div>
+      <div id="sessions-wrap"></div>
+    </div>
+
+    <!-- BENCHMARKS -->
+    <div id="page-benchmarks" class="page">
+      <div class="hdr" style="padding-top:52px;padding-bottom:14px">
+        <div class="hdr-badge">Performance Tests</div>
+        <h1>BENCH<br><span>MARKS</span></h1>
+        <div class="hdr-sub">Test at start &amp; end to see improvement</div>
+      </div>
+      <div id="benchmarks-wrap"></div>
+    </div>
+
+    <!-- PROGRESS -->
+    <div id="page-progress" class="page">
+      <div class="hdr" style="padding-top:52px;padding-bottom:14px">
+        <div class="hdr-badge">Track Progress</div>
+        <h1>MY<br><span>PROGRESS</span></h1>
+      </div>
+      <div style="padding:16px 16px 0"><div class="prog-hero"><div class="prog-wk">Overall Completion</div><div class="prog-big" id="prog-pct">0%</div><div class="prog-bar-wrap"><div class="prog-bar" id="prog-bar" style="width:0%"></div></div></div></div>
+      <div class="sec-pad"><div class="sec-title">Session Checklist</div></div>
+      <div class="check-card" id="checklist-wrap"></div>
+      <div class="sec-pad"><div class="sec-title">Benchmark Scores</div></div>
+      <div class="stat-grid" id="bench-scores"></div>
+      <div class="sec-pad"><div class="sec-title">Badges</div></div>
+      <div style="padding:0 16px 24px;display:flex;flex-wrap:wrap;gap:10px" id="badges-wrap"></div>
+    </div>
+
+    <!-- TIPS -->
+    <div id="page-tips" class="page">
+      <div class="hdr" style="padding-top:52px;padding-bottom:14px">
+        <div class="hdr-badge">Coaching Tips</div>
+        <h1>COACH'S<br><span>CORNER</span></h1>
+      </div>
+      <div class="sec-pad"><div class="sec-title">Training Guidelines</div></div>
+      <div class="tip-card"><div class="tip-icon g">&#9889;</div><div><div class="tip-h">Warm Up Every Time</div><div class="tip-p">Always begin with 5-10 min of arm circles, hip circles, leg swings, and dynamic stretches before sprint work.</div></div></div>
+      <div class="tip-card"><div class="tip-icon o">&#128167;</div><div><div class="tip-h">Stay Hydrated</div><div class="tip-p">Drink water before, during, and after every session. Young athletes dehydrate faster than adults.</div></div></div>
+      <div class="tip-card"><div class="tip-icon p">&#129504;</div><div><div class="tip-h">Quality Over Quantity</div><div class="tip-p">Focus on perfect form over speed in the first 2 weeks. Better mechanics early = faster times later.</div></div></div>
+      <div class="tip-card"><div class="tip-icon gold">&#127885;</div><div><div class="tip-h">Make It Fun &amp; Competitive</div><div class="tip-p">Use the stopwatch and challenge your athlete to beat their own time. Parent-child relays keep motivation high!</div></div></div>
+      <div class="tip-card"><div class="tip-icon t">&#128564;</div><div><div class="tip-h">Rest &amp; Recovery</div><div class="tip-p">At least one full rest day between sessions. Sleep is the number one performance enhancer for growing athletes.</div></div></div>
+      <div class="sec-pad"><div class="sec-title">Sport-Specific Benefits</div></div>
+      <div class="sport-card"><h4>Football</h4><ul><li>Cone zigzag builds route-running quickness</li><li>Shuttle runs develop stop-start explosiveness</li><li>Lateral agility improves defensive footwork</li><li>Pogo jumps develop spring for jump balls</li></ul></div>
+      <div class="sport-card"><h4>Golf</h4><ul><li>Single-leg balance improves stability through swing</li><li>Hip circles build hip rotation power</li><li>Core stability work improves clubhead speed</li><li>T-drill builds rotational athleticism</li></ul></div>
+      <div class="sport-card"><h4>Basketball</h4><ul><li>Cone dribble drills improve ball-handling under pressure</li><li>Ladder quick feet improves crossover step speed</li><li>Tuck jumps build rise on shots and rebounds</li><li>Side shuffle improves on-ball defense positioning</li></ul></div>
+      <div class="sport-card"><h4>Lacrosse</h4><ul><li>T-drill builds multi-directional cuts on field</li><li>Sprint and backpedal improves transition play</li><li>Single-leg bounding improves dodging defenders</li><li>Obstacle relay builds full game-speed movements</li></ul></div>
+      <div class="sec-pad"><div class="sec-title">Summer Extension</div></div>
+      <div class="summer-card"><h4>After Week 6: Keep the Gains</h4><p>Maintain 2-3 sessions per week using your favorite advanced drills. Increase reps, reduce rest times, or combine drills into circuits. Re-test benchmarks every 3-4 weeks. Goal: enter fall sports as the fastest, most agile athlete on the field!</p></div>
+      <div style="padding:0 16px 24px;font-size:11px;color:var(--muted);text-align:center;line-height:1.7">JP's Speed Lab &middot; Program by Hendrick Famutimi<br>Consult a healthcare professional before starting any new exercise program.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL -->
+<div id="modal">
+  <div id="modal-box">
+    <div id="modal-hdr">
+      <div id="modal-title">Drill Details</div>
+      <button id="modal-close">&#x2715;</button>
+    </div>
+    <div id="modal-body">
+      <p id="modal-desc"></p>
+      <div id="modal-steps-wrap">
+        <div id="modal-steps-lbl">HOW TO PERFORM</div>
+        <ol id="modal-steps"></ol>
+      </div>
+      <a id="modal-yt" class="yt-btn" href="#" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="white"><path d="M21.8 8s-.2-1.4-.8-2c-.8-.8-1.6-.8-2-.9C16.7 5 12 5 12 5s-4.7 0-7 .1c-.4.1-1.2.1-2 .9-.6.6-.8 2-.8 2S2 9.5 2 11v1.5c0 1.5.2 3 .2 3s.2 1.4.8 2c.8.8 1.8.8 2.3.9C6.9 18.5 12 18.5 12 18.5s4.7 0 7-.2c.4-.1 1.2-.1 2-.9.6-.6.8-2 .8-2s.2-1.5.2-3V11c0-1.5-.2-3-.2-3zM9.7 14.5V9l5.4 2.8-5.4 2.7z"/></svg>
+        Watch on YouTube
+      </a>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// Safe storage wrapper - handles iframe/private mode/file:// gracefully
+var store = (function(){
+  var mem = {};
+  var useLS = false;
+  try { localStorage.setItem('__t','1'); localStorage.removeItem('__t'); useLS = true; } catch(e){}
+  return {
+    get: function(k, def) {
+      if (!useLS) return mem[k] !== undefined ? mem[k] : def;
+      try { var v = localStorage.getItem(k); return v !== null ? JSON.parse(v) : def; } catch(e) { return def; }
+    },
+    set: function(k, v) {
+      mem[k] = v;
+      if (!useLS) return;
+      try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){}
+    }
+  };
+})();
+
+var YT = "https://www.youtube.com/playlist?list=PLLIRwtfXDc-mPLAUQZ4zRhqJTlSm_mikm";
+
+var videoLinks = {
+  "Cone Zigzag Run":"https://www.youtube.com/watch?v=HqGtZBYq8WY",
+  "Hurdle Single Leg Step-Over with Sprint":"https://www.youtube.com/watch?v=8yNMlQ0yS8Q",
+  "Agility Pole":"https://www.youtube.com/watch?v=6b1ViWr0zLM",
+  "Cone Balance Challenge":"https://www.youtube.com/watch?v=ZqaHZ7IQ0_o",
+  "Bunny Hop & Run":"https://www.youtube.com/watch?v=Yd8HQMnMXkI",
+  "Parent-Child Relay":"https://www.youtube.com/watch?v=VbD9kCLmi3o",
+  "Shuttle Runs":"https://www.youtube.com/watch?v=GjBPPJ-5CjM",
+  "Single leg bounding covering 15m":"https://www.youtube.com/watch?v=KLe5zD06-EA",
+  "Pogo jumps low/ Pogo Jumps Over Hurdles":"https://www.youtube.com/watch?v=Yd8HQMnMXkI",
+  "Timed Hurdle Race":"https://www.youtube.com/watch?v=8yNMlQ0yS8Q",
+  "Cone Sprint & Backpedal":"https://www.youtube.com/watch?v=GjBPPJ-5CjM",
+  "Lateral Agility":"https://www.youtube.com/watch?v=HqGtZBYq8WY",
+  "Hurdle Sprint & Zigzag":"https://www.youtube.com/watch?v=8yNMlQ0yS8Q",
+  "Cone Agility Drill":"https://www.youtube.com/watch?v=HqGtZBYq8WY",
+  "Hurdle Jump & Sprint":"https://www.youtube.com/watch?v=8yNMlQ0yS8Q",
+  "Kneeling jump to a tuck jump":"https://www.youtube.com/watch?v=DTsM8-MCHLE",
+  "Hurdle Hop & Sprint":"https://www.youtube.com/watch?v=Yd8HQMnMXkI",
+  "RFE Split Jump":"https://www.youtube.com/watch?v=TKt0-c83GSc",
+  "Ladder Quick Feet":"https://www.youtube.com/watch?v=CdHDuNwMORM",
+  "Cone Dribble & Shoot":"https://www.youtube.com/watch?v=HqGtZBYq8WY",
+  "Jump & Sprint Combo":"https://www.youtube.com/watch?v=8yNMlQ0yS8Q",
+  "Timed Obstacle Course":"https://www.youtube.com/watch?v=VbD9kCLmi3o",
+  "Hurdle Leapfrog":"https://www.youtube.com/watch?v=Yd8HQMnMXkI",
+  "Cone Sprint & Side Shuffle":"https://www.youtube.com/watch?v=GjBPPJ-5CjM",
+  "Hurdle Sprint & Weave":"https://www.youtube.com/watch?v=8yNMlQ0yS8Q",
+  "Parent-Child Obstacle Challenge":"https://www.youtube.com/watch?v=VbD9kCLmi3o",
+  "Ladder In & Out":"https://www.youtube.com/watch?v=CdHDuNwMORM",
+  "Cone Sprint & Turn":"https://www.youtube.com/watch?v=GjBPPJ-5CjM",
+  "Hurdle Hop & Weave":"https://www.youtube.com/watch?v=8yNMlQ0yS8Q",
+  "Ladder Sprint & Jump":"https://www.youtube.com/watch?v=CdHDuNwMORM",
+  "Ladder sprints (formally suicide sprints)":"https://www.youtube.com/watch?v=GjBPPJ-5CjM",
+  "Daddy Of 2 Afro Kids Special":YT,
+  "Obstacle Course Relay":"https://www.youtube.com/watch?v=VbD9kCLmi3o",
+  "Side shuffle with toe taps":"https://www.youtube.com/watch?v=HqGtZBYq8WY",
+  "Cone Sprint":"https://www.youtube.com/watch?v=GjBPPJ-5CjM",
+  "Ladder Agility Drill":"https://www.youtube.com/watch?v=CdHDuNwMORM",
+  "O- Fast feet drills":"https://www.youtube.com/watch?v=CdHDuNwMORM"
+};
+
+var drillInfo = {
+  "Cone Zigzag Run":{desc:"Sprint through cones in a zigzag. Builds sharp cuts, agility, and acceleration.",steps:["Set up 6-8 cones in a zigzag about 1m apart","Start in athletic stance at first cone","Sprint to each cone, plant outside foot, cut sharply","Return to start","Focus on leaning into each cut"]},
+  "Hurdle Single Leg Step-Over with Sprint":{desc:"Improves single-leg stability and explosive sprint mechanics.",steps:["Set 4-6 mini hurdles in a line about 1m apart","Step over each hurdle with one leg only","After last hurdle, sprint full speed 10m","Walk back and repeat","Switch lead leg each round"]},
+  "Agility Pole":{desc:"Weave in and out of poles as fast as possible without touching them.",steps:["Set 5-6 poles in a line about 1m apart","Start 2m before first pole","Weave in and out at full speed","Turn and weave back","Time each run and try to beat your best"]},
+  "Cone Balance Challenge":{desc:"Balance on one foot while moving between cones. Builds stability for all sports.",steps:["Arrange 4 cones in a square about 2m apart","Balance on one leg","Hop to each cone, hold balance 2 seconds on landing","Complete the square then switch legs","Try closing eyes to make it harder"]},
+  "Bunny Hop & Run":{desc:"Two-foot hops over hurdles then run around agility poles. Builds explosive power.",steps:["Set 4 mini hurdles in a line","Two-foot hop over each hurdle fast","After last hurdle weave around 3 agility poles","Return and repeat"]},
+  "Shuttle Runs":{desc:"Sprint forward, touch cone, sprint back. Classic acceleration drill.",steps:["Place cones at 5m and 10m from start","Sprint to first cone, touch ground","Sprint back through start","Sprint to far cone, touch ground","Sprint back - that is 1 round"]},
+  "Single leg bounding covering 15m":{desc:"Single-leg bounds over 15 meters. Builds explosive power for sprinting.",steps:["Start on one leg in athletic stance","Bound forward as far as possible each hop","Focus on big explosive jumps not tiny hops","Use arms to drive forward","Cover 15m, switch legs, repeat"]},
+  "Pogo jumps low/ Pogo Jumps Over Hurdles":{desc:"Quick low pogo jumps on spot, then height-focused hops over hurdles.",steps:["Phase 1: Bounce quickly on spot, ankles only, 10 seconds","Move immediately to hurdles","Phase 2: Hop over 4 mini hurdles with height","Land softly and spring off immediately","Focus on quick ground contacts"]},
+  "Kneeling jump to a tuck jump":{desc:"Start kneeling, explosively stand, then tuck jump. Builds reactive power.",steps:["Kneel on both knees on soft surface","Swing arms back then forward explosively","Jump up to standing in one motion","Without pausing, jump up bringing knees to chest","Land softly, return to kneel and repeat"]},
+  "RFE Split Jump":{desc:"Rear-foot elevated split jump. Builds single-leg power for sprinting.",steps:["Find a bench or cone about 45cm high","Place rear foot on it, front foot forward","Jump up explosively from front leg","Drive front knee up in the air","Land on same front foot, absorb, repeat","10 seconds each leg then switch"]},
+  "Ladder Quick Feet":{desc:"Quick feet through agility ladder. Best tool for footwork and coordination.",steps:["Lay ladder flat on ground","Two feet in each rung: step in-in, out-out","Start slow then build speed","Try high knees, lateral steps, crossover patterns","Keep eyes forward not looking at feet"]},
+  "Cone Dribble & Shoot":{desc:"Dribble a ball around cones and shoot at a target. Combines agility with sport skills.",steps:["Set 5 cones in a line or zigzag","Dribble ball through cones","At end, shoot at target or goal","Retrieve ball and repeat from other direction"]},
+  "Hurdle Sprint & Zigzag":{desc:"Sprint over hurdles then weave through cones. Sustained agility drill.",steps:["Set 3 hurdles in a line then 5 cones in zigzag","Sprint over all hurdles","Without stopping weave through cones","Sprint through finish","Time the full run and try to beat it"]},
+  "Timed Obstacle Course":{desc:"Full agility course. Parent times while athlete runs at full speed.",steps:["Set up hurdles, cones, poles, ladder in sequence","Parent starts stopwatch on GO","Athlete completes full course as fast as possible","Record time","Goal: beat previous time each session"]},
+  "Ladder In & Out":{desc:"Step in and out of ladder rungs laterally. Great for agility and footwork.",steps:["Lay ladder out on ground","Stand to the side of first rung","Step both feet in then both feet out the other side","Move laterally down the ladder","Return using backward movement"]},
+  "O- Fast feet drills":{desc:"Fast feet in an O-shape around cones, then side shuffle to next set.",steps:["Set 4 cones in a circle about 1.5m wide","Fast feet around entire circle","Immediately side-shuffle to next cone set 3m away","Repeat O-drill on second set","3 rounds continuous"]},
+  "Daddy Of 2 Afro Kids Special":{desc:"Signature combo drill: single-leg hops over hurdles, weave, side shuffle zigzag, sprint finish. Repeat with opposite leg.",steps:["Single leg hops over 4 hurdles","Weave between same hurdles","Side shuffle from cone to cone in zigzag","Run around final pole","Sprint to finish line","Rest then repeat with opposite leg"]}
+};
+
+var weekData = [
+  {label:"Weeks 1-2",phase:"Beginner Level - Foundation Building",emoji:"Beginner",color:"#00E676",sessions:[
+    {name:"Session 1",sub:"Beginner - Coordination & Agility",warmup:"Arm circles, hip circles, leg swings, walking lunges, high knees (5-10 min)",cool:"Toe touch, quad stretch, hamstring stretch (5 min)",exercises:[
+      {name:"Cone Zigzag Run",reps:"2 rounds",sets:3,rest:"30 sec",notes:"Zig-zag through cones with agility poles"},
+      {name:"Hurdle Single Leg Step-Over with Sprint",reps:"2 rounds",sets:4,rest:"1 min",notes:"Step over hurdles single leg, sprint to finish"},
+      {name:"Agility Pole",reps:"2 rounds",sets:3,rest:"30 sec",notes:"Weave in and out as fast as possible"},
+      {name:"Cone Balance Challenge",reps:"3 rounds",sets:3,rest:"45 sec",notes:"Balance on one foot while moving around cones"}
+    ]},
+    {name:"Session 2",sub:"Beginner - Power & Relay",warmup:"Same as Session 1",cool:"Toe touch, quad stretch, hamstring stretch (5 min)",exercises:[
+      {name:"Bunny Hop & Run",reps:"3 rounds",sets:3,rest:"45 sec",notes:"Hop over hurdles, run around agility poles"},
+      {name:"Parent-Child Relay",reps:"2 rounds",sets:2,rest:"1 min",notes:"Race together through hurdles and cones"},
+      {name:"Shuttle Runs",reps:"3 rounds",sets:3,rest:"1 min",notes:"Sprint to cone and back as fast as possible"},
+      {name:"Single leg bounding covering 15m",reps:"1 round",sets:3,rest:"1 min",notes:"Explosive bounding, 15m each leg"}
+    ]},
+    {name:"Session 3",sub:"Beginner - Jumps & Sprints",warmup:"Same as Session 1",cool:"Toe touch, quad stretch, hamstring stretch (5 min)",exercises:[
+      {name:"Pogo jumps low/ Pogo Jumps Over Hurdles",reps:"8",sets:3,rest:"30 sec",notes:"Pogo on spot 10 sec low, then height over hurdles"},
+      {name:"Timed Hurdle Race",reps:"2 rounds",sets:3,rest:"1 min",notes:"Race through course of hurdles and cones"},
+      {name:"Cone Sprint & Backpedal",reps:"3 rounds",sets:3,rest:"45 sec",notes:"Sprint to cone, backpedal to start"},
+      {name:"Lateral Agility",reps:"6 hurdles",sets:3,rest:"1 min",notes:"Lateral jump over hurdle, side hop to next"}
+    ]}
+  ]},
+  {label:"Weeks 3-4",phase:"Intermediate Level - Speed & Endurance",emoji:"Intermediate",color:"#FF6D00",sessions:[
+    {name:"Session 1",sub:"Intermediate - Sprint Combos",warmup:"Leg swings, side lunges, complex dynamic stretches (10 min)",cool:"Hamstring stretch, calf stretch, butterfly stretch (5 min)",exercises:[
+      {name:"Hurdle Sprint & Zigzag",reps:"3 rounds",sets:3,rest:"1 min",notes:"Sprint over hurdles, weave through cones and poles"},
+      {name:"Cone Agility Drill",reps:"3 rounds",sets:3,rest:"1 min",notes:"Run around poles set in zigzag or circle"},
+      {name:"Hurdle Jump & Sprint",reps:"3 rounds",sets:3,rest:"1 min",notes:"Jump over hurdles, sprint to finish line"},
+      {name:"Kneeling jump to a tuck jump",reps:"5 rounds",sets:3,rest:"45 sec",notes:"Kneel on floor, jump to feet, then tuck jump"}
+    ]},
+    {name:"Session 2",sub:"Intermediate - Power & Footwork",warmup:"Same as Session 1",cool:"Toe touch, quad stretch, hamstring stretch (5 min)",exercises:[
+      {name:"Hurdle Hop & Sprint",reps:"3 rounds",sets:3,rest:"45 sec",notes:"Hop over hurdles, sprint to finish"},
+      {name:"RFE Split Jump",reps:"10 sec each leg",sets:3,rest:"30 sec",notes:"Back leg elevated, jump high for 10 sec each leg"},
+      {name:"Ladder Quick Feet",reps:"3 rounds",sets:3,rest:"30 sec",notes:"Quick steps in and out of ladder rungs"},
+      {name:"Cone Dribble & Shoot",reps:"3 rounds",sets:3,rest:"1 min",notes:"Dribble ball around cones and shoot at target"}
+    ]},
+    {name:"Session 3",sub:"Intermediate - Course & Combo",warmup:"Same as Session 1",cool:"Toe touch, quad stretch, hamstring stretch (5 min)",exercises:[
+      {name:"Jump & Sprint Combo",reps:"10",sets:3,rest:"45 sec",notes:"Jump over hurdles, sprint around poles"},
+      {name:"Timed Obstacle Course",reps:"2 rounds",sets:3,rest:"1 min",notes:"Time performance in an agility course"},
+      {name:"Hurdle Leapfrog",reps:"3 rounds",sets:3,rest:"1 min",notes:"Leapfrog over hurdles with a partner"},
+      {name:"Cone Sprint & Side Shuffle",reps:"3 rounds",sets:3,rest:"1 min",notes:"Sprint to cone, shuffle sideways to next, return"}
+    ]}
+  ]},
+  {label:"Weeks 5-6",phase:"Advanced Level - Dynamic Power & Speed",emoji:"Advanced",color:"#7C4DFF",sessions:[
+    {name:"Session 1",sub:"Advanced - Sprint & Obstacle",warmup:"Same as Weeks 3-4 (10 min)",cool:"Toe touch, quad stretch, hamstring stretch (5 min)",exercises:[
+      {name:"Hurdle Sprint & Weave",reps:"3 rounds",sets:3,rest:"1 min",notes:"Sprint over hurdles, weave through poles"},
+      {name:"Parent-Child Obstacle Challenge",reps:"2 rounds",sets:2,rest:"1 min",notes:"Combine all activities into a challenging course"},
+      {name:"Ladder In & Out",reps:"3 rounds",sets:3,rest:"30 sec",notes:"Step in and out of ladder rungs quickly"},
+      {name:"Cone Sprint & Turn",reps:"3 rounds",sets:3,rest:"45 sec",notes:"Sprint to cone, touch, quickly change direction"}
+    ]},
+    {name:"Session 2",sub:"Advanced - Power & Signature",warmup:"Same as Weeks 3-4 (10 min)",cool:"Toe touch, quad stretch, hamstring stretch (5 min)",exercises:[
+      {name:"Hurdle Hop & Weave",reps:"3 rounds",sets:3,rest:"1 min",notes:"Hop over hurdles, weave through cones"},
+      {name:"Ladder Sprint & Jump",reps:"3 rounds",sets:3,rest:"30 sec",notes:"Ladder footwork then explosive jump at end"},
+      {name:"Ladder sprints (formally suicide sprints)",reps:"Based on child",sets:3,rest:"1 min",notes:"Sprint to cone, back, sprint further, back. 2-4 cones."},
+      {name:"Daddy Of 2 Afro Kids Special",reps:"2 rounds",sets:3,rest:"1 min",notes:"Single-leg hops, weave, side shuffle, sprint finish. Repeat other leg."}
+    ]},
+    {name:"Session 3",sub:"Advanced - Full Circuit",warmup:"Same as Session 1 (5-10 min)",cool:"Same as Weeks 3-4 (5 min)",exercises:[
+      {name:"Obstacle Course Relay",reps:"3 rounds",sets:3,rest:"1 min",notes:"Combine hurdles, cones, poles, ladders in fun course"},
+      {name:"Side shuffle with toe taps",reps:"2 rounds",sets:2,rest:"30 sec",notes:"Shuffle to called cone, return to center, toe tap"},
+      {name:"Cone Sprint",reps:"3 rounds",sets:3,rest:"45 sec",notes:"Sprint to cone, pivot, and return"},
+      {name:"Ladder Agility Drill",reps:"3 rounds",sets:3,rest:"30 sec",notes:"Side steps, high knees, skips through ladder"},
+      {name:"O- Fast feet drills",reps:"2 rounds",sets:3,rest:"1 min",notes:"Fast feet O-shape around cones, side shuffle to next"}
+    ]}
+  ]}
+];
+
+var benchmarks = [
+  {id:"sprint20",icon:"S",title:"20-Meter Sprint",desc:"Measures speed, acceleration, and explosive starting power.",how:"Mark 20m. Stand behind line. Sprint full speed to finish on GO!",unit:"seconds",lower:true,pills:["Speed","Power","Acceleration"]},
+  {id:"shuttle",icon:"A",title:"Agility Shuttle (5-10-5)",desc:"Tests rapid direction changes, reaction time, and agility.",how:"3 cones 5m apart. Start center. Sprint left, pivot right all the way, return center.",unit:"seconds",lower:true,pills:["Agility","Reaction","Direction Change"]},
+  {id:"longjump",icon:"J",title:"Standing Long Jump",desc:"Measures lower body explosive power and leg strength.",how:"Stand behind line, feet shoulder-width. Jump as far as you can. Measure to back of heels.",unit:"cm",lower:false,pills:["Explosiveness","Leg Power","Athleticism"]},
+  {id:"tdrill",icon:"T",title:"T-Drill",desc:"Measures multi-directional agility and lateral quickness.",how:"Set cones in T-shape. Sprint forward, shuffle left, shuffle right, backpedal to start.",unit:"seconds",lower:true,pills:["Lateral Speed","Agility","Core"]},
+  {id:"balance",icon:"B",title:"Single-Leg Balance",desc:"Measures postural control, proprioception, and core strength.",how:"Stand on one leg, hands on hips. Time how long without touching floor. Both legs.",unit:"seconds",lower:false,pills:["Balance","Core","Stability"]},
+  {id:"coneweave",icon:"C",title:"Cone Weave Drill",desc:"Tests quickness, agility, and rapid direction change.",how:"5 cones in a line, 1m apart. Weave in and out as fast as possible without knocking cones.",unit:"seconds",lower:true,pills:["Quickness","Agility","Coordination"]}
+];
+
+// State
+var currentTab = 'home';
+var currentWeek = 0;
+var sessionsDone = store.get('sc_sessions', {});
+var benchResults = store.get('sc_bench', {});
+
+// Tab switching
+function goTab(id) {
+  var pages = document.querySelectorAll('.page');
+  for (var i=0; i<pages.length; i++) pages[i].classList.remove('active');
+  var tabs = document.querySelectorAll('.tab');
+  for (var i=0; i<tabs.length; i++) tabs[i].classList.remove('active');
+  var page = document.getElementById('page-' + id);
+  var tab  = document.getElementById('tab-' + id);
+  if (page) page.classList.add('active');
+  if (tab)  tab.classList.add('active');
+  document.getElementById('content').scrollTop = 0;
+  currentTab = id;
+  if (id === 'program')    renderProgram();
+  if (id === 'benchmarks') renderBenchmarks();
+  if (id === 'progress')   renderProgress();
+}
+
+document.getElementById('tab-home').onclick       = function(){ goTab('home'); };
+document.getElementById('tab-program').onclick    = function(){ goTab('program'); };
+document.getElementById('tab-benchmarks').onclick = function(){ goTab('benchmarks'); };
+document.getElementById('tab-progress').onclick   = function(){ goTab('progress'); };
+document.getElementById('tab-tips').onclick        = function(){ goTab('tips'); };
+document.getElementById('go-program-btn').onclick = function(){ goTab('program'); };
+
+// Week buttons
+function setWeek(idx) {
+  currentWeek = idx;
+  var btns = document.querySelectorAll('.week-btn');
+  for (var i=0; i<btns.length; i++) btns[i].classList.remove('active');
+  document.getElementById('wbtn-' + idx).classList.add('active');
+  renderProgram();
+}
+document.getElementById('wbtn-0').onclick = function(){ setWeek(0); };
+document.getElementById('wbtn-1').onclick = function(){ setWeek(1); };
+document.getElementById('wbtn-2').onclick = function(){ setWeek(2); };
+
+// Render Program
+function renderProgram() {
+  var w = weekData[currentWeek];
+  document.getElementById('week-phase-lbl').textContent = w.emoji + ' - ' + w.phase + ' - 30-40 min sessions';
+  var wrap = document.getElementById('sessions-wrap');
+  wrap.innerHTML = '';
+
+  for (var si=0; si<w.sessions.length; si++) {
+    (function(sess, si) {
+      var key = 'w' + currentWeek + '_s' + si;
+      var card = document.createElement('div');
+      card.className = 'sess-card';
+
+      var hdr = document.createElement('div');
+      hdr.className = 'sess-hdr';
+      hdr.innerHTML = '<div class="sess-hdr-l"><div class="sess-num" style="background:' + w.color + '">' + (si+1) + '</div><div class="sess-info"><h3>' + sess.name + '</h3><p>' + sess.sub + '</p></div></div><span class="chevron">&#8250;</span>';
+      hdr.onclick = function() { card.classList.toggle('open'); };
+
+      var body = document.createElement('div');
+      body.className = 'sess-body';
+
+      var wu = document.createElement('div');
+      wu.className = 'warmup';
+      wu.innerHTML = '<div class="wc-title">Warm-Up (5-10 min)</div><div class="wc-text">' + sess.warmup + '</div>';
+      body.appendChild(wu);
+
+      var exl = document.createElement('div');
+      exl.className = 'ex-lbl';
+      exl.textContent = 'Activities';
+      body.appendChild(exl);
+
+      for (var ei=0; ei<sess.exercises.length; ei++) {
+        (function(ex, ei) {
+          var row = document.createElement('div');
+          row.className = 'ex-row';
+
+          var left = document.createElement('div');
+          left.className = 'ex-left';
+          left.innerHTML = '<div class="ex-name">' + ex.name + '</div><div class="ex-note">' + ex.notes + '</div><div class="ex-tags"><span class="ex-tag">' + ex.reps + '</span><span class="ex-tag">' + ex.sets + ' sets</span><span class="ex-tag">Rest ' + ex.rest + '</span></div>';
+
+          var btn = document.createElement('button');
+          btn.className = 'vid-btn';
+          btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>HOW';
+          btn.onclick = (function(wi,si,ei){ return function(e){ e.stopPropagation(); showModal(wi,si,ei); }; })(currentWeek, si, ei);
+
+          row.appendChild(left);
+          row.appendChild(btn);
+          body.appendChild(row);
+        })(sess.exercises[ei], ei);
+      }
+
+      var cd = document.createElement('div');
+      cd.className = 'cooldown';
+      cd.innerHTML = '<div class="wc-title">Cool-Down (5 min)</div><div class="wc-text">' + sess.cool + '</div>';
+      body.appendChild(cd);
+
+      var isDone = !!sessionsDone[key];
+      var cb = document.createElement('button');
+      cb.className = 'complete-btn';
+      updateCompleteBtn(cb, isDone);
+      cb.onclick = (function(k, btn){
+        return function(){
+          sessionsDone[k] = !sessionsDone[k];
+          store.set('sc_sessions', sessionsDone);
+          updateCompleteBtn(btn, sessionsDone[k]);
+          updateHomeProgress();
+          showToast(sessionsDone[k] ? 'Session complete!' : 'Session unmarked');
+        };
+      })(key, cb);
+      body.appendChild(cb);
+
+      card.appendChild(hdr);
+      card.appendChild(body);
+      wrap.appendChild(card);
+    })(w.sessions[si], si);
+  }
+}
+
+function updateCompleteBtn(btn, done) {
+  btn.textContent = done ? 'Session Complete' : 'Mark as Complete';
+  btn.style.background = done ? 'rgba(0,230,118,0.15)' : '#00E676';
+  btn.style.color = done ? '#00E676' : '#0A0F1E';
+}
+
+// Render Benchmarks
+function renderBenchmarks() {
+  var wrap = document.getElementById('benchmarks-wrap');
+  wrap.innerHTML = '<div style="padding:0 16px 8px;font-size:12px;color:var(--muted);line-height:1.6">Test before starting (baseline) and after Week 6 (final). Record your scores below.</div>';
+
+  for (var i=0; i<benchmarks.length; i++) {
+    (function(b) {
+      var preVal  = benchResults[b.id + '_pre']  || '';
+      var postVal = benchResults[b.id + '_post'] || '';
+
+      var card = document.createElement('div');
+      card.className = 'bench-card';
+
+      var pillsHTML = '';
+      for (var j=0; j<b.pills.length; j++) pillsHTML += '<span class="bench-pill">' + b.pills[j] + '</span>';
+      pillsHTML += '<span class="bench-pill">' + (b.lower ? 'Lower is better' : 'Higher is better') + '</span>';
+
+      card.innerHTML =
+        '<div class="bench-icon" style="font-size:16px;font-weight:900;font-family:Bebas Neue,sans-serif;color:var(--green);margin-bottom:6px">' + b.icon + '</div>' +
+        '<div class="bench-title">' + b.title + '</div>' +
+        '<div class="bench-desc">' + b.desc + '</div>' +
+        '<div class="bench-how">' + b.how + '</div>' +
+        '<div class="bench-pills">' + pillsHTML + '</div>' +
+        '<div class="bench-inputs">' +
+          '<div><div class="bench-input-lbl">Baseline (Week 1)</div><div class="bench-row"><input class="bench-inp" id="inp_' + b.id + '_pre" type="number" step="0.1" placeholder="' + b.unit + '" value="' + preVal + '"><button class="bench-save" id="sav_' + b.id + '_pre">Save</button></div></div>' +
+          '<div><div class="bench-input-lbl">Final (Week 6)</div><div class="bench-row"><input class="bench-inp" id="inp_' + b.id + '_post" type="number" step="0.1" placeholder="' + b.unit + '" value="' + postVal + '"><button class="bench-save" id="sav_' + b.id + '_post">Save</button></div></div>' +
+        '</div>';
+
+      if (preVal && postVal) {
+        var diff = parseFloat(postVal) - parseFloat(preVal);
+        var improved = b.lower ? diff < 0 : diff > 0;
+        var pct = parseFloat(preVal) !== 0 ? (Math.abs(diff/parseFloat(preVal))*100).toFixed(1) : '0';
+        var res = document.createElement('div');
+        res.className = 'bench-result ' + (improved ? 'good' : 'keep');
+        res.textContent = (improved ? 'Improved: ' : 'Keep training: ') + Math.abs(diff).toFixed(1) + ' ' + b.unit + ' (' + pct + '% change)';
+        card.appendChild(res);
+      }
+
+      wrap.appendChild(card);
+
+      // Attach save buttons after card is in DOM
+      (function(bid) {
+        ['pre','post'].forEach(function(phase) {
+          var savBtn = document.getElementById('sav_' + bid + '_' + phase);
+          if (savBtn) {
+            savBtn.onclick = function() {
+              var inpEl = document.getElementById('inp_' + bid + '_' + phase);
+              if (inpEl) { benchResults[bid + '_' + phase] = inpEl.value; store.set('sc_bench', benchResults); showToast('Saved!'); renderBenchmarks(); }
+            };
+          }
+        });
+      })(b.id);
+    })(benchmarks[i]);
+  }
+
+  var ytDiv = document.createElement('div');
+  ytDiv.style.cssText = 'padding:4px 16px 16px';
+  ytDiv.innerHTML = '<a class="yt-btn" href="' + YT + '" target="_blank" rel="noopener">Watch Full Coaching Playlist on YouTube</a>';
+  wrap.appendChild(ytDiv);
+}
+
+// Render Progress
+function renderProgress() {
+  var total = 9;
+  var doneKeys = Object.keys(sessionsDone).filter(function(k){ return sessionsDone[k]; });
+  var done = doneKeys.length;
+  var pct = Math.round((done / total) * 100);
+  document.getElementById('prog-pct').textContent = pct + '%';
+  document.getElementById('prog-bar').style.width = pct + '%';
+
+  var cl = document.getElementById('checklist-wrap');
+  cl.innerHTML = '';
+  for (var wi=0; wi<weekData.length; wi++) {
+    var w = weekData[wi];
+    var lbl = document.createElement('div');
+    lbl.style.cssText = 'font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);padding:8px 0 4px;';
+    lbl.textContent = w.label + ' - ' + w.emoji;
+    cl.appendChild(lbl);
+    for (var si=0; si<w.sessions.length; si++) {
+      (function(key, s) {
+        var isDone = !!sessionsDone[key];
+        var item = document.createElement('div');
+        item.className = 'check-item';
+        var box = document.createElement('div');
+        box.className = 'check-box' + (isDone ? ' done' : '');
+        box.textContent = isDone ? '✓' : '';
+        var txt = document.createElement('div');
+        txt.className = 'check-txt' + (isDone ? ' done' : '');
+        txt.textContent = s.name + ' - ' + s.sub;
+        item.appendChild(box); item.appendChild(txt);
+        item.onclick = function() {
+          sessionsDone[key] = !sessionsDone[key];
+          store.set('sc_sessions', sessionsDone);
+          updateHomeProgress();
+          renderProgress();
+        };
+        cl.appendChild(item);
+      })('w' + wi + '_s' + si, w.sessions[si]);
+    }
+  }
+
+  var bg = document.getElementById('bench-scores');
+  bg.innerHTML = '';
+  for (var i=0; i<benchmarks.length; i++) {
+    var b = benchmarks[i];
+    var pre  = benchResults[b.id + '_pre'];
+    var post = benchResults[b.id + '_post'];
+    var c = document.createElement('div');
+    c.className = 'stat-card';
+    c.innerHTML = '<div class="stat-lbl">' + b.title + '</div>' +
+      (pre  ? '<div style="font-size:11px;color:var(--muted)">Start: <strong style="color:var(--text)">' + pre  + ' ' + b.unit + '</strong></div>' : '<div style="font-size:11px;color:var(--muted)">Not yet tested</div>') +
+      (post ? '<div style="font-size:11px;color:var(--green);margin-top:2px">Final: <strong>' + post + ' ' + b.unit + '</strong></div>' : '');
+    bg.appendChild(c);
+  }
+
+  var bc = document.getElementById('badges-wrap');
+  bc.innerHTML = '';
+  var badges = [
+    {label:'First Session',icon:'Star',check:done>=1},
+    {label:'Week 1 Done',icon:'Done',check:sessionsDone['w0_s0']&&sessionsDone['w0_s1']&&sessionsDone['w0_s2']},
+    {label:'Halfway',icon:'Flash',check:done>=5},
+    {label:'Advanced',icon:'Rocket',check:!!sessionsDone['w2_s0']},
+    {label:'All Done',icon:'Trophy',check:done>=9},
+    {label:'Benchmarked',icon:'Chart',check:Object.keys(benchResults).length>0}
+  ];
+  for (var i=0; i<badges.length; i++) {
+    var bd = badges[i];
+    var bdiv = document.createElement('div');
+    bdiv.style.cssText = 'background:' + (bd.check?'rgba(0,230,118,0.15)':'var(--card)') + ';border:1px solid ' + (bd.check?'rgba(0,230,118,0.3)':'rgba(255,255,255,0.05)') + ';border-radius:12px;padding:12px 14px;text-align:center;min-width:90px;flex:1';
+    bdiv.innerHTML = '<div style="font-size:11px;font-weight:700;margin-bottom:4px;color:' + (bd.check?'var(--green)':'var(--muted)') + '">' + (bd.check?'✓ ':'') + bd.icon + '</div><div style="font-size:11px;font-weight:600;color:' + (bd.check?'var(--green)':'var(--muted)') + '">' + bd.label + '</div>';
+    bc.appendChild(bdiv);
+  }
+}
+
+// Update home progress bar
+function updateHomeProgress() {
+  var total = 9;
+  var done = Object.keys(sessionsDone).filter(function(k){ return sessionsDone[k]; }).length;
+  var pct = Math.max(5, Math.round((done/total)*100));
+  document.getElementById('home-bar').style.width = pct + '%';
+  var wk = Math.min(Math.floor(done*2/3)+1, 6);
+  document.getElementById('home-week-big').textContent = 'W' + wk;
+  var phases = ['Beginner - Foundation','Beginner - Building','Intermediate - Speed','Intermediate - Endurance','Advanced - Power','Advanced - Full Speed'];
+  document.getElementById('home-phase').textContent = phases[Math.min(done,5)];
+}
+
+// Modal
+function showModal(weekIdx, sessIdx, exIdx) {
+  var ex   = weekData[weekIdx].sessions[sessIdx].exercises[exIdx];
+  var info = drillInfo[ex.name] || {desc:'Perform with focus on good form and controlled movements.',steps:['Set up equipment as described','Perform at controlled pace','Build to full speed','Rest and repeat']};
+  var url  = videoLinks[ex.name] || YT;
+
+  document.getElementById('modal-title').textContent = ex.name;
+  document.getElementById('modal-desc').textContent  = info.desc;
+
+  var ol = document.getElementById('modal-steps');
+  ol.innerHTML = '';
+  for (var i=0; i<info.steps.length; i++) {
+    var li = document.createElement('li');
+    li.textContent = info.steps[i];
+    ol.appendChild(li);
+  }
+
+  document.getElementById('modal-yt').href = url;
+  document.getElementById('modal').classList.add('show');
+}
+
+document.getElementById('modal-close').onclick = function() {
+  document.getElementById('modal').classList.remove('show');
+};
+document.getElementById('modal').onclick = function(e) {
+  if (e.target === this) this.classList.remove('show');
+};
+
+// Toast
+var toastTimer = null;
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 2000);
+}
+
+// Init
+renderProgram();
+updateHomeProgress();
+</script>
+</body>
+</html>
